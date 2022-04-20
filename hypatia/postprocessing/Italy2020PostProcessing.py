@@ -107,25 +107,23 @@ class Italy2020PostProcessing(PostProcessingInterface):
                 for tech in techs:
                     res = self.tech_to_carrier_out()[region][tech].mul(frame[tech].values, axis='index')
                     res = pd.concat({tech: res}, names=['Technology'])
-                    res = pd.concat({tech_type: res}, names=['Tech_category'])
                     res = pd.concat({region: res}, names=['Region'])
                     res["Datetime"] = res.apply(
-                        lambda row: datetime.strptime(str(year_to_year_name[row.name[3]]), '%Y') +
-                            timedelta(minutes=(525600  * time_fractions[int(row.name[4])] * int(row.name[4]))),
+                        lambda row: datetime.strptime(str(year_to_year_name[row.name[2]]), '%Y') +
+                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * int(row.name[3]))),
                         axis=1
                     )
-
                     res = res.reset_index()
                     res = res.melt(
-                        id_vars=["Datetime", 'Years', 'Timesteps', 'Region', "Tech_category", "Technology"],
+                        id_vars=["Datetime", 'Years', 'Timesteps', 'Region', "Technology"],
                         var_name="Carrier_out",
-                        value_name="Production",
+                        value_name="Value",
                     )
                     if result is None:
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result
+        return result[["Datetime", "Region", "Technology", "Carrier_out", "Value"]]
 
 
     def tech_carrier_in_production(self):
@@ -155,28 +153,29 @@ class Italy2020PostProcessing(PostProcessingInterface):
                 for tech in techs:
                     res = self.tech_to_carrier_in()[region][tech].mul(frame[tech].values, axis='index')
                     res = pd.concat({tech: res}, names=['Technology'])
-                    res = pd.concat({tech_type: res}, names=['Tech_category'])
                     res = pd.concat({region: res}, names=['Region'])
                     res["Datetime"] = res.apply(
-                        lambda row: datetime.strptime(str(year_to_year_name[row.name[3]]), '%Y') +
-                            timedelta(minutes=(525600  * time_fractions[int(row.name[4])] * int(row.name[4]))),
+                        lambda row: datetime.strptime(str(year_to_year_name[row.name[2]]), '%Y') +
+                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * int(row.name[3]))),
                         axis=1
                     )
                     res = res.reset_index()
                     res = res.melt(
-                        id_vars=['Datetime', 'Years', 'Timesteps', 'Region', "Tech_category", "Technology"],
+                        id_vars=['Datetime', 'Years', 'Timesteps', 'Region', "Technology"],
                         var_name="Carrier_in",
-                        value_name="Production",
+                        value_name="Value",
                     )
                     if result is None:
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result
+        return result[["Datetime", "Region", "Technology", "Carrier_in", "Value"]]
 
     def tech_cost(self):
         years = self._settings.years
-
+        year_to_year_name = {
+            row.Year:row.Year_name for _, row in self._settings.global_settings["Years"].iterrows()
+        }
         results = self._model_results
         costs_metrics = {
             "fixed_cost": results.cost_fix,
@@ -201,26 +200,32 @@ class Italy2020PostProcessing(PostProcessingInterface):
                         columns=columns,
                     )
                     tech_costs = pd.concat({region: tech_costs}, names=['Region'])
-                    tech_costs = pd.concat({tech_category: tech_costs}, names=['Tech_category'])
+                    tech_costs["Datetime"] = tech_costs.apply(
+                        lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y'),
+                        axis=1
+                    )
                     tech_costs = tech_costs.reset_index()
                     tech_costs = tech_costs.melt(
-                        id_vars=["Year", "Region", "Tech_category"],
+                        id_vars=["Year", "Datetime", "Region"],
                         var_name="Technology",
                         value_name=cost_name,
                     )
                     tech_costs = tech_costs.melt(
-                        id_vars=["Year", "Region", "Tech_category", "Technology"],
+                        id_vars=["Year", "Datetime", "Region", "Technology"],
                         var_name="Cost_type",
-                        value_name="Cost",
+                        value_name="Value",
                     )
                     if result is None:
                         result = tech_costs
                     else:
                         result = pd.concat([result, tech_costs])
-        return result
+        return result[["Datetime", "Region", "Technology", "Cost_type", "Value"]]
 
     def emissions(self):
         years = self._settings.years
+        year_to_year_name = {
+            row.Year:row.Year_name for _, row in self._settings.global_settings["Years"].iterrows()
+        }
         results = self._model_results
 
         result = None
@@ -235,20 +240,23 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     columns=columns,
                 )
                 tech_emissions = pd.concat({region: tech_emissions}, names=['Region'])
-                tech_emissions = pd.concat({tech_category: tech_emissions}, names=['Tech_category'])
+                tech_emissions["Datetime"] = tech_emissions.apply(
+                    lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y'),
+                    axis=1
+                )
                 tech_emissions = tech_emissions.reset_index()
                 tech_emissions = tech_emissions.melt(
-                    id_vars=["Year", "Region", "Tech_category"],
+                    id_vars=["Datetime", "Year", "Region",],
                     var_name="Technology",
                     value_name="CO2",
                 )
                 tech_emissions = tech_emissions.melt(
-                    id_vars=["Year", "Region", "Tech_category", "Technology"],
+                    id_vars=["Datetime", "Year", "Region", "Technology"],
                     var_name="Pollutant",
-                    value_name="Emissions",
+                    value_name="Value",
                 )
                 if result is None:
                     result = tech_emissions
                 else:
                     result = pd.concat([result, tech_emissions])
-        return result
+        return result[["Datetime", "Region", "Technology", "Pollutant", "Value"]]
