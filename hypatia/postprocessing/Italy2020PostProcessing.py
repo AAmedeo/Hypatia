@@ -185,7 +185,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
             "fix_sub_cost": results.cost_fix_sub,
         }
         if self._settings.mode == ModelMode.Planning:
-            costs_metrics[decommissioning_cost] = results.cost_decom
+            costs_metrics["decommissioning_cost"] = results.cost_decom
 
         result = None
         for cost_name, cost_metric in costs_metrics.items():

@@ -258,6 +258,84 @@ class Model:
             ]:
                 eval(sheet).to_excel(file, sheet_name=sheet.split("_")[0].title())
 
+    def create_aggregation_config_file(self, path):
+        """Creates a config for defining aggregation. Used only during the Italy2020 project (will not be merged to main)
+
+        Parameters
+        ----------
+        path : str
+            defines the path and the name of the excel file to be created.
+        """
+
+        techs_property = {
+            "tech_name": list(self.__settings.global_settings["Technologies_glob"]["Tech_name"]),
+            "tech_cap_unit": list(self.__settings.global_settings["Technologies_glob"]["Tech_cap_unit"]),
+            "tech_production_unit": list(self.__settings.global_settings["Technologies_glob"]["Tech_act_unit"]),
+            "aggregation_0":  list(self.__settings.global_settings["Technologies_glob"]["Tech_category"])
+        }
+
+        techs_sheet = pd.DataFrame(techs_property,
+            index=self.__settings.global_settings["Technologies_glob"]["Technology"],
+        )
+
+        fuels_property = {
+            "fuel_name": list(self.__settings.global_settings["Carriers_glob"]["Carr_name"]),
+            "fuel_unit": list(self.__settings.global_settings["Carriers_glob"]["Carr_unit"]),
+            "aggregation_0": list(self.__settings.global_settings["Carriers_glob"]["Carr_type"]),
+        }
+
+        fuels_sheet = pd.DataFrame(fuels_property,
+            index=self.__settings.global_settings["Carriers_glob"]["Carrier"],
+        )
+
+        regions_property = {
+            "region_name": list(self.__settings.global_settings["Regions"]["Region_name"]),
+            "aggregation_0": '',
+        }
+
+        regions_sheet = pd.DataFrame(regions_property,
+            index=self.__settings.global_settings["Regions"]["Region"],
+        )
+
+        emissions_sheet = self.__settings.global_settings['Emissions'].set_index(['Emission'],inplace=False)
+        emissions_sheet = pd.DataFrame(
+            emissions_sheet.values,
+            index = emissions_sheet.index,
+            columns = ['emission_name','emission_unit']
+        )
+        emissions_sheet.index.name = 'Emission'
+
+        costs_to_cost_name = {
+            "fixed_cost": "Fixed Cost",
+            "emission_cost": "Emission Cost",
+            "variable_cost": "Variable Cost",
+            "fix_tax_cost": "Fixed Tax Cost",
+            "fix_sub_cost": "Fixed Subsidy Cost",
+            "decommissioning_cost": "Decommissioning Cost"
+        }
+        cost_property = {
+            "cost_name": costs_to_cost_name.values(),
+            "unit": '',
+            "aggregation_0": '',
+        }
+
+        cost_sheet = pd.DataFrame(cost_property,
+            index=pd.Index(
+                costs_to_cost_name.keys(),
+                name="Costs"
+            ),
+        )
+
+        with pd.ExcelWriter(path) as file:
+            for sheet in [
+                "techs_sheet",
+                "fuels_sheet",
+                "regions_sheet",
+                "emissions_sheet",
+                "cost_sheet"
+            ]:
+                eval(sheet).to_excel(file, sheet_name=sheet.split("_")[0].title())
+
     def __str__(self):
         to_print = (
             "name = {}\n"
