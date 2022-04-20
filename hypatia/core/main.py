@@ -19,10 +19,8 @@ from hypatia.utility.excel import (
 from hypatia.utility.constants import ModelMode
 from hypatia.backend.Build import BuildModel
 from copy import deepcopy
-from hypatia.analysis.postprocessing import (
-    set_DataFrame,
-    dict_to_csv,
-)
+from hypatia.postprocessing.PostProcessingList import POSTPROCESSING_MODULES
+
 import os
 import shutil
 import pandas as pd
@@ -170,20 +168,9 @@ class Model:
         results = model._solve(verbosity=verbosity, solver=solver.upper(), **kwargs)
         self.check = results
         if results is not None:
-
-            results = set_DataFrame(
-                results=results,
-                regions=self.__settings.regions,
-                years=self.__settings.years,
-                time_fraction=self.__settings.time_steps,
-                glob_mapping=self.__settings.global_settings,
-                technologies=self.__settings.technologies,
-                mode=self.__settings.mode,
-            )
-
             self.results = results
 
-    def to_csv(self, path, force_rewrite=False):
+    def to_csv(self, path, postprocessing_module="default", force_rewrite=False):
         """Exports the results of the model to csv files with nested folders
 
         Parameters
@@ -207,8 +194,16 @@ class Model:
                 )
         else:
             os.mkdir(path)
+        self.__model_data.settings
 
-        dict_to_csv(self.results, path)
+        if postprocessing_module in POSTPROCESSING_MODULES.keys():
+            POSTPROCESSING_MODULES[postprocessing_module](
+                self.__model_data,
+                self.results
+            ).write_processed_results(path)
+        else:
+            raise Exception("Post processing module do not exist")
+
 
     def create_config_file(self, path):
         """Creates a config excel file for plots
