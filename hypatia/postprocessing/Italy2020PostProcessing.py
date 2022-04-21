@@ -125,14 +125,14 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     res = res.reset_index()
                     res = res.melt(
                         id_vars=["Datetime", 'Years', 'Timesteps', 'Region', "Technology"],
-                        var_name="Carrier_out",
+                        var_name="Carrier",
                         value_name="Value",
                     )
                     if result is None:
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier_out", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier", "Value"]]
 
 
     def tech_carrier_in_production(self):
@@ -171,14 +171,14 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     res = res.reset_index()
                     res = res.melt(
                         id_vars=['Datetime', 'Years', 'Timesteps', 'Region', "Technology"],
-                        var_name="Carrier_in",
+                        var_name="Carrier",
                         value_name="Value",
                     )
                     if result is None:
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier_in", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier", "Value"]]
 
     def tech_cost(self):
         years = self._settings.years

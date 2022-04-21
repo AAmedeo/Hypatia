@@ -278,13 +278,13 @@ class Model:
             index=self.__settings.global_settings["Technologies_glob"]["Technology"],
         )
 
-        fuels_property = {
-            "fuel_name": list(self.__settings.global_settings["Carriers_glob"]["Carr_name"]),
-            "fuel_unit": list(self.__settings.global_settings["Carriers_glob"]["Carr_unit"]),
+        carriers_property = {
+            "carrier_name": list(self.__settings.global_settings["Carriers_glob"]["Carr_name"]),
+            "carrier_unit": list(self.__settings.global_settings["Carriers_glob"]["Carr_unit"]),
             "aggregation_0": list(self.__settings.global_settings["Carriers_glob"]["Carr_type"]),
         }
 
-        fuels_sheet = pd.DataFrame(fuels_property,
+        carriers_sheet = pd.DataFrame(carriers_property,
             index=self.__settings.global_settings["Carriers_glob"]["Carrier"],
         )
 
@@ -329,7 +329,7 @@ class Model:
         with pd.ExcelWriter(path) as file:
             for sheet in [
                 "techs_sheet",
-                "fuels_sheet",
+                "carriers_sheet",
                 "regions_sheet",
                 "emissions_sheet",
                 "cost_sheet"
