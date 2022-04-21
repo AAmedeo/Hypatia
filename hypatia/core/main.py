@@ -374,7 +374,7 @@ class Model:
         time_sheet = pd.DataFrame(
             time_property,
             index=pd.Index(
-                datetimes,
+                map(lambda datetime: str(datetime), datetimes),
                 name="Datetime"
             ),
         )
