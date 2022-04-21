@@ -261,14 +261,14 @@ class Italy2020PostProcessing(PostProcessingInterface):
                 )
                 tech_emissions = tech_emissions.melt(
                     id_vars=["Datetime", "Year", "Region", "Technology"],
-                    var_name="Pollutant",
+                    var_name="Emission",
                     value_name="Value",
                 )
                 if result is None:
                     result = tech_emissions
                 else:
                     result = pd.concat([result, tech_emissions])
-        return result.reset_index()[["Datetime", "Region", "Technology", "Pollutant", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Emission", "Value"]]
 
 def write_processed_result(postprocessed_result: Dict, path: str):
     for key, value in postprocessed_result.items():
