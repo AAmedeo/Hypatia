@@ -8,6 +8,15 @@ import pandas as pd
 import numpy as np
 import os
 from typing import Dict
+import os
+import shutil
+from hypatia.error_log.Exceptions import (
+    WrongInputMode,
+    DataNotImported,
+    ResultOverWrite,
+    SolverNotFound,
+)
+
 
 class Italy2020PostProcessing(PostProcessingInterface):
     def year_slice_index(
@@ -123,7 +132,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result[["Datetime", "Region", "Technology", "Carrier_out", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier_out", "Value"]]
 
 
     def tech_carrier_in_production(self):
@@ -169,7 +178,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                         result = res
                     else:
                         result = pd.concat([result, res])
-        return result[["Datetime", "Region", "Technology", "Carrier_in", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Carrier_in", "Value"]]
 
     def tech_cost(self):
         years = self._settings.years
@@ -219,7 +228,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                         result = tech_costs
                     else:
                         result = pd.concat([result, tech_costs])
-        return result[["Datetime", "Region", "Technology", "Cost_type", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Cost_type", "Value"]]
 
     def emissions(self):
         years = self._settings.years
@@ -259,4 +268,43 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     result = tech_emissions
                 else:
                     result = pd.concat([result, tech_emissions])
-        return result[["Datetime", "Region", "Technology", "Pollutant", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Pollutant", "Value"]]
+
+def write_processed_result(postprocessed_result: Dict, path: str):
+    for key, value in postprocessed_result.items():
+        if isinstance(value, pd.DataFrame):
+            value.to_csv(f"{path}//{key}.csv")
+        else:
+            new_path = f"{path}//{key}"
+            os.makedirs(new_path, exist_ok=True)
+            write_processed_result(value, new_path)
+
+def italy2020_merge_results(scenarios: Dict[str, str], path: str, force_rewrite: bool = False):
+    result_df_names = ["tech_production", "tech_use", "tech_cost", "emissions"]
+    results = {}
+    for result_df_name in result_df_names:
+        results[result_df_name] = None
+        for scenario_name, scenatio_path in scenarios.items():
+            old_df = pd.read_csv(
+                r"{}/{}.csv".format(scenatio_path, result_df_name),
+                index_col=[0],
+                header=[0],
+            )
+            old_df = pd.concat({scenario_name: old_df}, names=['Scenario'])
+            if results[result_df_name] is None:
+                results[result_df_name] = old_df
+            else:
+                results[result_df_name] = pd.concat([results[result_df_name], old_df]).reset_index().drop('level_1', axis=1)
+
+    if os.path.exists(path):
+        if not force_rewrite:
+            raise ResultOverWrite(
+                f"Folder {path} already exists. To over write"
+                f" the parameter files, use force_rewrite=True."
+            )
+        else:
+            shutil.rmtree(path)
+    os.mkdir(path)
+
+
+    write_processed_result(results, path)

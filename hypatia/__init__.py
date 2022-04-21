@@ -51,4 +51,5 @@ from hypatia.core.main import Model
 from hypatia.error_log import Exceptions
 from hypatia.analysis.plots import Plotter
 from hypatia.examples.load_examples import load_example, download_example
+from hypatia.postprocessing.Italy2020PostProcessing import italy2020_merge_results
 from hypatia.version import __version__
