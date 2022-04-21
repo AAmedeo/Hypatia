@@ -20,10 +20,14 @@ from hypatia.utility.constants import ModelMode
 from hypatia.backend.Build import BuildModel
 from copy import deepcopy
 from hypatia.postprocessing.PostProcessingList import POSTPROCESSING_MODULES
-
+import itertools
 import os
 import shutil
 import pandas as pd
+from datetime import (
+    datetime,
+    timedelta
+)
 
 import logging
 
@@ -326,13 +330,63 @@ class Model:
             ),
         )
 
+        years = self.__settings.years
+        time_steps = self.__settings.time_steps
+        year_to_year_name = {
+            row.Year:row.Year_name for _, row in self.__settings.global_settings["Years"].iterrows()
+        }
+        time_fractions = {
+            row.Timeslice:row.Timeslice_fraction for _, row in self.__settings.global_settings["Timesteps"].iterrows()
+        }
+        datetimes = list(
+            map(
+                lambda row: datetime.strptime(str(year_to_year_name[row[0]]), '%Y') +
+                    timedelta(minutes=(525600  * time_fractions[int(row[1])] * (int(row[1]) - 1))),
+                list(itertools.product(*[years,time_steps]))
+            )
+        )
+        time_property = {
+            "year": list(
+                map(
+                    lambda datetime: datetime.strftime("%Y"),
+                    datetimes,
+                )
+            ),
+            "month": list(
+                map(
+                    lambda datetime: datetime.strftime("%B"),
+                    datetimes,
+                )
+            ),
+            "day": list(
+                map(
+                    lambda datetime: datetime.strftime("%A"),
+                    datetimes,
+                )
+            ),
+            "hour": list(
+                map(
+                    lambda datetime: datetime.strftime("%H"),
+                    datetimes,
+                )
+            ),
+        }
+        time_sheet = pd.DataFrame(
+            time_property,
+            index=pd.Index(
+                datetimes,
+                name="Datetime"
+            ),
+        )
+
         with pd.ExcelWriter(path) as file:
             for sheet in [
                 "techs_sheet",
                 "carriers_sheet",
                 "regions_sheet",
                 "emissions_sheet",
-                "cost_sheet"
+                "cost_sheet",
+                "time_sheet",
             ]:
                 eval(sheet).to_excel(file, sheet_name=sheet.split("_")[0].title())
 
