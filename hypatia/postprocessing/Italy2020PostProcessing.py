@@ -221,14 +221,14 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     )
                     tech_costs = tech_costs.melt(
                         id_vars=["Year", "Datetime", "Region", "Technology"],
-                        var_name="Cost_type",
+                        var_name="Cost",
                         value_name="Value",
                     )
                     if result is None:
                         result = tech_costs
                     else:
                         result = pd.concat([result, tech_costs])
-        return result.reset_index()[["Datetime", "Region", "Technology", "Cost_type", "Value"]]
+        return result.reset_index()[["Datetime", "Region", "Technology", "Cost", "Value"]]
 
     def emissions(self):
         years = self._settings.years

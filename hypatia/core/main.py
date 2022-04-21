@@ -322,7 +322,7 @@ class Model:
         cost_sheet = pd.DataFrame(cost_property,
             index=pd.Index(
                 costs_to_cost_name.keys(),
-                name="Costs"
+                name="Cost"
             ),
         )
 
