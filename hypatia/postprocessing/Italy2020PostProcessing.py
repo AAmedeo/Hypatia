@@ -119,7 +119,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     res = pd.concat({region: res}, names=['Region'])
                     res["Datetime"] = res.apply(
                         lambda row: datetime.strptime(str(year_to_year_name[row.name[2]]), '%Y') +
-                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * int(row.name[3]))),
+                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * (int(row.name[3]) - 1))),
                         axis=1
                     )
                     res = res.reset_index()
@@ -165,7 +165,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     res = pd.concat({region: res}, names=['Region'])
                     res["Datetime"] = res.apply(
                         lambda row: datetime.strptime(str(year_to_year_name[row.name[2]]), '%Y') +
-                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * int(row.name[3]))),
+                            timedelta(minutes=(525600  * time_fractions[int(row.name[3])] * (int(row.name[3]) - 1))),
                         axis=1
                     )
                     res = res.reset_index()
