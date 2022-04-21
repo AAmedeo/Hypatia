@@ -35,8 +35,8 @@ italy2020_merge_results(
     force_rewrite=True
 )
 
-AGGREGATION FILE
-generate aggregation for the 2 models.
-Since the 2 models sets are the same the generated file from the 2 models will be the same. Therefore I generate only 1 aggregation file
-which can be shared between the 2 models
+# AGGREGATION FILE
+# generate aggregation for the 2 models.
+# Since the 2 models sets are the same the generated file from the 2 models will be the same. Therefore I generate only 1 aggregation file
+# which can be shared between the 2 models
 model.create_aggregation_config_file(path=base_path + "aggregation_config.xlsx")
