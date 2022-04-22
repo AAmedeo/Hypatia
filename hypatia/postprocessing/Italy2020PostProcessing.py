@@ -210,7 +210,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                     )
                     tech_costs = pd.concat({region: tech_costs}, names=['Region'])
                     tech_costs["Datetime"] = tech_costs.apply(
-                        lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y'),
+                        lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y').strftime("%Y"),
                         axis=1
                     )
                     tech_costs = tech_costs.reset_index()
@@ -250,7 +250,7 @@ class Italy2020PostProcessing(PostProcessingInterface):
                 )
                 tech_emissions = pd.concat({region: tech_emissions}, names=['Region'])
                 tech_emissions["Datetime"] = tech_emissions.apply(
-                    lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y'),
+                    lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y').strftime("%Y"),
                     axis=1
                 )
                 tech_emissions = tech_emissions.reset_index()
