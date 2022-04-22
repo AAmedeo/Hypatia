@@ -24,6 +24,7 @@ import itertools
 import os
 import shutil
 import pandas as pd
+import numpy as np
 from datetime import (
     datetime,
     timedelta
@@ -371,12 +372,17 @@ class Model:
                 )
             ),
         }
-        time_sheet = pd.DataFrame(
+        datetime_sheet = pd.DataFrame(
             time_property,
             index=pd.Index(
                 map(lambda datetime: str(datetime), datetimes),
                 name="Datetime"
             ),
+        )
+
+        year_sheet = pd.DataFrame(
+            np.unique(time_property["year"]), 
+            columns=["Years"],
         )
 
         with pd.ExcelWriter(path) as file:
@@ -386,7 +392,8 @@ class Model:
                 "regions_sheet",
                 "emissions_sheet",
                 "cost_sheet",
-                "time_sheet",
+                "datetime_sheet",
+                "year_sheet"
             ]:
                 eval(sheet).to_excel(file, sheet_name=sheet.split("_")[0].title())
 
