@@ -1,0 +1,89 @@
+import pandas as pd
+import numpy as np
+import unittest
+import copy
+from hypatia.backend.ModelSettings import ModelSettings
+from hypatia.backend.ModelData import ModelData
+from hypatia.utility.constants import ModelMode
+from hypatia.backend.Build import BuildModel
+from hypatia.backend.tests.TestSettings import (
+    SingleNodeOperationEmissionTestSettings,
+    SingleNodePlanningEmissionTestSettings,
+    MultiNodeOperationEmissionTestSettings,
+    MultiNodePlanningEmissionTestSettings
+)
+import hypatia.error_log.Exceptions as hypatiaException
+
+'''
+Test how hypatia models emissions by checking that:
+    1. The model correctly tracks the emission generate by the model solution
+    2. The model correctly considers emission cost to find the optimal solution
+    3. The model correctly considers emission caps (global and regional) to find the optimal solution
+We check these feature in the 4 main scenarios:
+    1. Single region, planning
+    2. Single region, operation
+    3. Multi region, planning
+    4. Multi region, operation
+'''
+
+class TestEmissionsSingleRegionOperation(unittest.TestCase):
+    '''
+    The scenario used in the test is:
+
+        ------------------------------ Reg1 --------------------------------
+        Elec_import  |-> Elec |
+                              |-> Elec Demand
+                     |-> Elec |
+        
+                     |-> Heat |
+                     |-> Heat Demand
+        Heat_import                                  -> Heat |
+    '''
+
+    def __init__(self, *args, **kwargs):
+        super(TestEmissionsSingleRegionOperation, self).__init__(*args, **kwargs)
+
+    # Checks the model correctly tracks the emission generate by the model solution
+    def test_emission_tracking(self):
+        example_settings = SingleNodeOperationEmissionTestSettings()
+        settings = ModelSettings(
+            ModelMode.Operation,
+            example_settings.global_settings,
+            example_settings.regional_settings,
+        )
+
+        regional_parameters = settings.default_regional_parameters
+
+        # Define the demand dataframe (containing all demand technologies as columns and timesteps as rows) as 
+        # a dataframe increasing by one in each row
+        regional_parameters["reg1"]["demand"] += 1
+
+
+        # iterate through the timesteps excluding the first one
+        for row_index in range(1,regional_parameters["reg1"]["demand"].shape[0]):
+            sub_dataset = regional_parameters["reg1"]["demand"].iloc[row_index,:]
+            sub_dataset = pd.DataFrame(np.array(sub_dataset).reshape(1,2))
+            sub_dataset += row_index
+            regional_parameters["reg1"]["demand"].iloc[row_index,:] = sub_dataset      
+
+        # Increment the residual capacity for all techs
+        regional_parameters["reg1"]["tech_residual_cap"] += 20000000000
+
+        # Increment the cost for Heat_import and Elec_import so it is better to fulfil the demand using NG
+        regional_parameters["reg1"]["tech_var_cost"].loc[:, (slice(None), ["Elec_import", "Heat_import"])] += 1
+
+        # Increment the Emission production for the NG transformation technologies
+        regional_parameters["reg1"]["specific_emission"].loc[:,(["CO2"], slice(None), ["NG_ref","NG_chp"])] += 1
+        regional_parameters["reg1"]["specific_emission"].loc[:,(["NOx"], slice(None), ["NG_chp"])] += 2
+
+        model_data = ModelData(
+            settings,
+            settings.default_global_parameters,
+            settings.default_trade_parameters,
+            regional_parameters
+        )
+        model = BuildModel(model_data=model_data)
+        results = model._solve(verbosity=False, solver="SCIPY")
+        #ciao         
+
+
