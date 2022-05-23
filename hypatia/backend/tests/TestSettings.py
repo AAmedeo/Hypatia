@@ -759,5 +759,87 @@ class MultiNodePlanningEmissionTestSettings(ExampleSettings):
             }
         }
     
-    
-    # ciao ciao         
+ 
+'''
+Ramping Tests settings
+'''
+class SingleNodeOperationRampingTestSettings(ExampleSettings):
+    @property
+    def global_settings(self):
+        global_settings =  {
+            "Regions": pd.DataFrame(
+                np.array([['reg1', 'Utopia']]),
+                columns=["Region", "Region_name"],
+            ),
+            "Years": pd.DataFrame(
+                np.array([
+                    ['Y0', '2020'],
+                ]),
+                columns=["Year", "Year_name"],
+            ),
+            "Technologies_glob": pd.DataFrame(
+                np.array([
+                    ['Elec_import', 'Electricity import', "Supply", "GW", "GWh"],
+                    ['PV_park', 'Photovoltaic park', "Supply", "GW", "GWh"],
+                    ['Elec_demand', 'Electricty demand', "Demand", "GWh", "GWh"]
+                ]),
+                columns=["Technology", "Tech_name", "Tech_category", "Tech_cap_unit", "Tech_act_unit"]
+            ),
+            "Carriers_glob": pd.DataFrame(
+                np.array([
+                    ['Elec', 'Electricity', "Demand", "GWh"]
+                ]),
+                columns=["Carrier", "Carr_name", "Carr_type", "Carr_unit"]
+            ),
+            "Emissions": pd.DataFrame(
+                np.array([
+                    ['CO2', 'CO2 emissions', 'ton']
+                ]),
+                columns=["Emission", "Emission_name", "Emission_unit"],
+            ),
+        }
+
+        time_slices = []
+        for i in range(1, 8761):
+            time_slices.append([str(i), "h"+str(i), 0.000114155251141553])
+
+        global_settings["Timesteps"] = pd.DataFrame(
+            np.array(time_slices),
+            columns=["Timeslice", "Timeslice_name", "Timeslice_fraction"]
+        )
+
+        return global_settings
+
+    @property
+    def regional_settings(self):
+        return {
+            'reg1': {
+                "Technologies": pd.DataFrame(
+                np.array([
+                    ['Elec_import', 'Electricity import', "Supply"],
+                    ['PV_park', 'Photovoltaic park', "Supply"],
+                    ['Elec_demand', 'Electricty demand', "Demand"]
+                ]),
+                    columns=["Technology", "Tech_name", "Tech_category"]
+                ),
+                "Carriers": pd.DataFrame(
+                np.array([
+                    ['Elec', 'Electricity', "Demand"]
+                ]),
+                    columns=["Carrier", "Carr_name", "Carr_type"]
+                ),
+                "Carrier_input": pd.DataFrame(
+                    np.array([
+                        ['Elec_demand', 'Elec']
+                    ]),
+                    columns=["Technology", "Carrier_in"]
+                ),
+                "Carrier_output": pd.DataFrame(
+                    np.array([
+                        ['Elec_import', 'Elec'],
+                        ['PV_park', 'Elec']
+                    ]),
+                    columns=["Technology", "Carrier_out"]
+                ),
+            }
+        }
