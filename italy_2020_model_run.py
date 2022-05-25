@@ -2,9 +2,10 @@ from hypatia import Model
 from hypatia import Plotter
 
 ## defalt parameters - single node
-path = r"C:\Users\frac1\Politecnico di Milano\DENG-SESAM - Documenti\PROJECTS_Eni_Modelling Suite\Model\Hypatia-main\examples\Italian_energy_system_2020"
-model = Model(path=path + "sets", mode="Operation")
-model.read_input_data(path=path + "/parameters_scenario_2")
+path = r"/Users/afa/Desktop/italy2020/"
+model = Model(path=path + "sets2", mode="Operation")
+model.create_data_excels(path=path + "/parameters1", force_rewrite=True)
+model.read_input_data(path=path + "/parameters1")
 model.run(solver='scipy')
 model.to_csv(path=path + '/results_italy_scenario_2', force_rewrite=True, postprocessing_module="it2020")
 

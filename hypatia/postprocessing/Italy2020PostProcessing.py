@@ -1,5 +1,6 @@
 from hypatia.postprocessing.PostProcessingInterface import PostProcessingInterface
 from hypatia.utility.constants import ModelMode
+from hypatia.utility.utility import get_emission_types
 from datetime import (
     datetime,
     timedelta
@@ -188,11 +189,13 @@ class Italy2020PostProcessing(PostProcessingInterface):
         results = self._model_results
         costs_metrics = {
             "fixed_cost": results.cost_fix,
-            "emission_cost": results.emission_cost,
             "variable_cost": results.cost_variable,
             "fix_tax_cost": results.cost_fix_tax,
             "fix_sub_cost": results.cost_fix_sub,
         }
+        for emission_type in get_emission_types(self._settings.global_settings):
+            costs_metrics[emission_type + "_emission_cost"] = results.emission_cost_by_type[emission_type]
+
         if self._settings.mode == ModelMode.Planning:
             costs_metrics["decommissioning_cost"] = results.cost_decom
 
@@ -238,36 +241,37 @@ class Italy2020PostProcessing(PostProcessingInterface):
         results = self._model_results
 
         result = None
-        for region, regional_emissions in results.CO2_equivalent.items():
-            for tech_category, emissions in regional_emissions.items():
-                columns = self._settings.technologies[region][tech_category]
-                tech_emissions = pd.DataFrame(
-                    data=emissions.value,
-                    index=pd.Index(
-                        years, name="Year"
-                    ),
-                    columns=columns,
-                )
-                tech_emissions = pd.concat({region: tech_emissions}, names=['Region'])
-                tech_emissions["Datetime"] = tech_emissions.apply(
-                    lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y').strftime("%Y"),
-                    axis=1
-                )
-                tech_emissions = tech_emissions.reset_index()
-                tech_emissions = tech_emissions.melt(
-                    id_vars=["Datetime", "Year", "Region",],
-                    var_name="Technology",
-                    value_name="CO2",
-                )
-                tech_emissions = tech_emissions.melt(
-                    id_vars=["Datetime", "Year", "Region", "Technology"],
-                    var_name="Emission",
-                    value_name="Value",
-                )
-                if result is None:
-                    result = tech_emissions
-                else:
-                    result = pd.concat([result, tech_emissions])
+        for emission_type in get_emission_types(self._settings.global_settings):
+            for region, regional_emissions in results.emission_cost_by_type[emission_type].items():
+                for tech_category, emissions in regional_emissions.items():
+                    columns = self._settings.technologies[region][tech_category]
+                    tech_emissions = pd.DataFrame(
+                        data=emissions.value,
+                        index=pd.Index(
+                            years, name="Year"
+                        ),
+                        columns=columns,
+                    )
+                    tech_emissions = pd.concat({region: tech_emissions}, names=['Region'])
+                    tech_emissions["Datetime"] = tech_emissions.apply(
+                        lambda row: datetime.strptime(str(year_to_year_name[row.name[1]]), '%Y').strftime("%Y"),
+                        axis=1
+                    )
+                    tech_emissions = tech_emissions.reset_index()
+                    tech_emissions = tech_emissions.melt(
+                        id_vars=["Datetime", "Year", "Region",],
+                        var_name="Technology",
+                        value_name=emission_type,
+                    )
+                    tech_emissions = tech_emissions.melt(
+                        id_vars=["Datetime", "Year", "Region", "Technology"],
+                        var_name="Emission",
+                        value_name="Value",
+                    )
+                    if result is None:
+                        result = tech_emissions
+                    else:
+                        result = pd.concat([result, tech_emissions])
         return result.reset_index()[["Datetime", "Region", "Technology", "Emission", "Value"]]
 
 def write_processed_result(postprocessed_result: Dict, path: str):
